@@ -3,6 +3,9 @@
 linkedin_start_page=1
 linkedin_end_page=1
 
+indeed_start_page=1
+indeed_end_page=1
+
 irishjobs_start_page=1
 irishjobs_end_page=1
 
@@ -25,7 +28,10 @@ if (
     echo -e "${GREEN}[1/3] Parse LinkedIn Data...${NC}"
     poetry run python parser_linkedin.py --start_page $linkedin_start_page --end_page $linkedin_end_page --config $config || exit 1
 
-    echo -e "${GREEN}[2/3] Parse IrishJobs Data...${NC}"
+    echo -e "${GREEN}[2/3] Parse Indeed Data...${NC}"
+    poetry run python parser_indeed.py --start_page $indeed_start_page --end_page $indeed_end_page --config $config || exit 1
+
+    echo -e "${GREEN}[3/3] Parse IrishJobs Data...${NC}"
     poetry run python parser_irishjobs.py --start_page $irishjobs_start_page --end_page $irishjobs_end_page --config $config || exit 1
 
     if [ "$open_similar_company_recommend" = "True" ]; then

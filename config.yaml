@@ -12,6 +12,10 @@ linkedin_html_data_dir: "data/linkedin_raw_data"
 linkedin_filename_added: 'linkedin_data_added.csv'
 linkedin_filename: 'linkedin_data.csv'
 
+indeed_html_data_dir: "indeed_raw_data"
+indeed_filename_added: 'indeed_data_added.csv'
+indeed_filename: 'indeed_data.csv'
+
 main_table_path: 'data/all_jobs.csv'
 recent_week_review_path: 'data/recent_week_review_jobs.csv'
 job_alert_path: 'output/1_job_alert_recommendation.csv'

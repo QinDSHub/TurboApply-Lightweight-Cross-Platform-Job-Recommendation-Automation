@@ -64,11 +64,16 @@ def match_company(df):
       df.loc[df['origin_company'].str.contains("bank of|university"),'company'] = df[df['origin_company'].str.contains("bank of|university")]['origin_company']
 
       df.loc[~df['origin_company'].str.contains("bank"),'company'] = df[~df['origin_company'].str.contains('bank')]['company'].apply(lambda x:str(x).replace("ireland","").strip())
+      
       df.loc[df['company'].str.contains("-"),"company"] = df[df['company'].str.contains("-")]["company"].apply(lambda x:str(x).split("-")[0])
 
-      df.loc[df['company'].str.contains('gpc'),'company'] = "gpc"
-      df.loc[df['company'].str.contains("jp morgan"), "company"] = "jpmorganchase"
-      df.loc[df['company'].str.contains("red hat"), "company"] = "redhat"
+      org_company_list = ["m-kopa", "global-e"]
+      for com in org_company_list:
+          df.loc[df['origin_company'].str.contains(com), "company"] = com
+
+      new_company_list = {"gpc":"gpc", "jp morgan":"jpmorganchase", "red hat":"redhat"}
+      for com in new_company_list:
+          df.loc[df['company'].str.contains(com),"company"] = new_company_list[com]
 
       del df['company_len']
 
