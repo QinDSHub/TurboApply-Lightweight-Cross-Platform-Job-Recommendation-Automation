@@ -69,23 +69,22 @@ Building on V3.0.0, this release reorganises the data and output directories to 
 
 **V3.2.0 – Duplicate Listing Prevention & Logging Enhancement**
 * **Function optimization:** During recent usage, I identified an issue with duplicate job listings across daily searches. For example, jobs downloaded within the previous 24 hours on Day 1 could reappear in the latest one day results on Day 2 when companies refreshed or republished their listings.
-
   To address this, V3.2.0 introduced a rolling two-week data retention window to keep the review dataset bounded. Expired records are automatically removed before ingesting the latest listings, regardless of whether an application was submitted. This prevents previously reviewed jobs from repeatedly resurfacing when companies refresh or republish the same listings, making the daily workflow more efficient and reducing unnecessary manual review.
 * **Logging for traceability:** Replaced direct `print` statements used for debugging with a dedicated logging function built on Python's standard `logging` module, improving traceability, maintainability, scalability, and troubleshooting.
 
 **V3.2.1 – Latest Using Iteration**
 * **Standardise function design:** Improved function structure and coding standards by adopting Google-style docstrings. Functions are now documented with clear descriptions of their purpose, parameters, return values, and expected behaviour where appropriate, improving code readability, maintainability, and consistency across the project.
-
 * **Company name normalisation:** After analysing the `company` feature data, identified inconsistencies in company names on the same platform, such as `ABC` and `ABC Ireland`, which could cause duplicate company entries and fragmented company-level recommendations. Introduced a rule-based normalisation approach to standardise company names, covering the vast majority of observed cases. The rules extract the first name segment before a space, period, or hyphen, while preserving short names of three characters or fewer (e.g., `An Post`) and names containing key phrases such as `Bank of` or `University` (e.g., `Bank of Ireland` and `Bank of America`). Additional exceptions were implemented for selected companies requiring special handling. This improves company-level consistency and recommendation accuracy without relying on more complex processing.
-
 * **Incremental company-level job alert recommendations:** Optimised company-level job alert recommendation generation by adopting an append-only approach. Newly identified companies are added to the existing recommendation dataset without reprocessing previously analysed companies, reducing redundant LLM calls and token consumption while improving the efficiency and scalability of the workflow.
 
-
-**Main – Latest Final Version**
+**V3.2.2 – Latest Using Iteration**
 * **Indeed Platform Integration:** Added an Indeed HTML parser, expanding TurboApply’s job data ingestion capabilities and broadening job-search coverage across major platforms.
 * **Application Efficiency Metrics:** Added real-world performance metrics based on personal application records (`docs/online_metrics.xlsx`). Current results show an average of **12.80 minutes per application** and a median of **11.40 minutes**. Compared with my previous LinkedIn application workflow (approximately 30–60 minutes per application), TurboApply improves application throughput by approximately **2.3–4.7×**, providing a measurable baseline for further workflow optimisation.
 * **Usage Guide Demo:** Watch the [YouTube demo](https://youtu.be/47pr1f1YzZY) for a step-by-step walkthrough of how to use TurboApply.
 
+**MAIN – Iteration**
+* **Integrated application start and end time tracking into online metrics:** Added a manual timestamp marker to record when daily applications from the recommended job list begin.
+* **Automated monthly online metric monitoring and follow-up:** Replaced the previously manual monitoring process with an integrated automated workflow for ongoing performance tracking and follow-up.
 
 ### ⚡ In a nutshell, the steps are:
 * **Download and unzip the repository.** Make sure the required versions of Python and Poetry are installed.
