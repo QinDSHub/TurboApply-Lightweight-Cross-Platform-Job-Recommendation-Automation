@@ -84,7 +84,9 @@ Building on V3.0.0, this release reorganises the data and output directories to 
 
 **MAIN – Iteration**
 * **Integrated application start and end time tracking into online metrics:** Added a manual timestamp marker to record when daily applications from the recommended job list begin.
-* **Automated monthly online metric monitoring and follow-up:** Replaced the previously manual monitoring process with an integrated automated workflow for ongoing performance tracking and follow-up.
+* **Automated monthly online metric monitoring and reporting:** Replaced manual monitoring with an automated workflow for ongoing performance tracking and follow-up. Set `run_monthly_report` to `True` in `one_click_run.sh` at the beginning of each month to automatically generate the monthly online metrics report.
+
+---
 
 ### ⚡ In a nutshell, the steps are:
 * **Download and unzip the repository.** Make sure the required versions of Python and Poetry are installed.
