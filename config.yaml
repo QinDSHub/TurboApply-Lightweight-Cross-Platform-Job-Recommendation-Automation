@@ -1,32 +1,34 @@
-data_dir: 'data'
+data_dir: 'results'
 # interview_company: "acompany,bcompany", just add new interview company in order to decrease token cost
 interview_company: "c-company"
 region: "Ireland"
 top_k: int("recommend number for similar business companies based on your interview_company")
 
-irishjobs_html_data_dir: 'data/irishjobs_raw_data'
-irishjobs_filename_added: 'irishjobs_data_added.csv'
-irishjobs_filename: "irishjobs_data.csv"
+irishjobs_html_data_dir: 'results/irishjobs_raw_data'
+irishjobs_filename_added: 'output_data/irishjobs_data_added.csv'
+irishjobs_filename: "output_data/irishjobs_data.csv"
 
-linkedin_html_data_dir: "data/linkedin_raw_data"
-linkedin_filename_added: 'linkedin_data_added.csv'
-linkedin_filename: 'linkedin_data.csv'
+linkedin_html_data_dir: "results/linkedin_raw_data"
+linkedin_filename_added: 'output_data/linkedin_data_added.csv'
+linkedin_filename: 'output_data/linkedin_data.csv'
 
-indeed_html_data_dir: "indeed_raw_data"
-indeed_filename_added: 'indeed_data_added.csv'
-indeed_filename: 'indeed_data.csv'
+indeed_html_data_dir: "results/indeed_raw_data"
+indeed_filename_added: 'output_data/indeed_data_added.csv'
+indeed_filename: 'output_data/indeed_data.csv'
 
-main_table_path: 'data/all_jobs.csv'
-recent_week_review_path: 'data/recent_week_review_jobs.csv'
-job_alert_path: 'output/1_job_alert_recommendation.csv'
-recommendation_path: 'output/2_today_recommendation.csv'
-all_today_new_open_jobs: 'output/3_other_today_new_open_jobs.csv'
+main_table_path: 'results/output_data/all_jobs.csv'
+recent_week_review_path: 'results/output_data/recent_week_review_jobs.csv'
+job_alert_path: 'results/1_job_alert_recommendation.csv'
+recommendation_path: 'results/2_today_recommendation.csv'
+all_today_new_open_jobs: 'results/3_other_today_new_open_jobs.csv'
 
 title_filter_keywords: "ai,ml,data,software,senior,engineer,agentic,llm,dl,nlp"
 delete_words_in_title: "trainee,affairs,grain,part-time,part time,intern,product"
 delete_words_in_company: "human,recruitment,jobgether,recruit,fruition,talent"
 
-similar_company_save_path: "output/similar_company_list.csv"
+similar_company_save_path: "results/output_data/similar_company_list.csv"
+metric_data_path: "results/output_data/online_metric_data.csv"
+month_report_path: "results/monthly_report.csv"
 
 
 

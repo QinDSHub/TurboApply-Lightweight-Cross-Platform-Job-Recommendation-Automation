@@ -5,6 +5,36 @@ import os, shutil
 import yaml
 from dataclasses import dataclass
 
+need_cols = ['job_id', 'title', 'origin_company', 'company', 'location', 'salary', 'posted_date', 
+            'job_url', 'scrape_date', 'last_apply_date','last_apply_title',
+            'last_apply_to_today_days', 'recommend', 'apply_date', 'time']
+
+def check_cols_and_save(tmp:pd.DataFrame, tmp_path: Path, need_cols:list):
+    missing = [c for c in need_cols if c not in tmp.columns.tolist()]
+    if missing:
+        for col in missing:
+            tmp[col]=None
+        tmp[need_cols].to_csv(tmp_path, index=False, encoding='utf-8-sig')
+        return tmp
+    else:
+        print("No new columns added!")
+
+def save_metric_data(df:pd.DataFrame,df_path:Path):
+      df = df[(df['recommend'].notnull())|(~df['recommend'].isin(["nan"]))]
+      if len(df)>0:
+            tmp1 = df[['apply_date','time']].drop_duplicates().groupby('apply_date')['time'].agg(["min","max"]).rename(columns={'min':"time_min",'max':"time_max"}).reset_index()
+            
+            tmp2 = df.groupby(["apply_date","recommend"])["recommend"].count().reset_index(name="count")
+            tmp2['recommend'] = tmp2['recommend'].astype("Int64")
+            tmp2['recommend'] = tmp2["recommend"].apply(lambda x:"applied" if x==1 else "review")
+            # 当执行pd.pivot()的时候得到的columns.name = "recommend"，所以需要将其赋值为None
+            tmp2 = tmp2.pivot(index="apply_date",columns="recommend",values="count").reset_index()
+            tmp2.columns.name=None
+            # tmp2["applied"]=tmp2["applied"].fillna(0)
+            # tmp2["review"]=tmp2["review"].fillna(0)
+            res = tmp1.merge(tmp2,on="apply_date",how="left")
+            res.to_csv(df_path,mode="a", header=False, index=False, encoding='utf-8-sig')
+
 @dataclass
 class JobInfo:
     """Data class representing a single job posting.

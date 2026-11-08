@@ -4,13 +4,17 @@ import re, argparse
 from datetime import datetime
 import warnings
 from utils import load_config, match_company
+from utils import need_cols, check_cols_and_save
+from utils import save_metric_data
 from logger import setup_logging
 import logging
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
 
+
 setup_logging()
 logger = logging.getLogger(__name__)
+
 
 def added_process(added_data_path_list:list, 
                   needed_keywords_in_title:str,
@@ -122,7 +126,8 @@ def add_yesterday_to_main_table(job_alert_path:Path,
                                 recommendation_path: Path, 
                                 all_today_new_open_jobs: Path, 
                                 main_table_path: Path,
-                                recent_week_review_path: Path)->pd.DataFrame:
+                                recent_week_review_path: Path,
+                                metric_data_path:Path)->pd.DataFrame:
       """Append yesterday's recommended jobs into the main table and refresh the recent review table.
 
       Reads the three recommendation CSVs (job alert, customized recommendation,
@@ -137,6 +142,7 @@ def add_yesterday_to_main_table(job_alert_path:Path,
           all_today_new_open_jobs (Path): CSV of today's newly opened jobs.
           main_table_path (Path): Main application table to append to.
           recent_week_review_path (Path): CSV storing recently reviewed jobs.
+          metric_data_path(Path): CSV storing online metric data.
 
       Returns:
           None: This function appends rows to the main table and writes the
@@ -144,10 +150,17 @@ def add_yesterday_to_main_table(job_alert_path:Path,
       """
 
       logger.info("---Integrate yesterday's application data into main table---")
+
+      # add columns checking
+      main_table = pd.read_csv(main_table_path)
+      main_table = check_cols_and_save(main_table, main_table_path, need_cols)
       
       # append result-0 into primary_table
       # recommend=1 means applied, 2 means not apply but review, null means not apply not review
       job_alert_tmp = pd.read_csv(job_alert_path)
+      job_alert_tmp = check_cols_and_save(job_alert_tmp, job_alert_path, need_cols)
+      # add metric data into saved file: apply_date, min_time, max_time, apply number, review number
+      save_metric_data(job_alert_tmp, metric_data_path)
     #   job_alert_tmp['recommend'] = job_alert_tmp['recommend'].astype('int64') # 放置null值报错
       job_alert_tmp['recommend'] = job_alert_tmp['recommend'].astype('Int64')
       job_alert_tmp_filter = job_alert_tmp[job_alert_tmp['recommend']==1]
@@ -158,6 +171,8 @@ def add_yesterday_to_main_table(job_alert_path:Path,
 
       # append result-1 into primary_table
       recommendation_tmp = pd.read_csv(recommendation_path)
+      recommendation_tmp = check_cols_and_save(recommendation_tmp, recommendation_path, need_cols)
+      save_metric_data(recommendation_tmp, metric_data_path)
       recommendation_tmp['recommend'] = recommendation_tmp['recommend'].astype('Int64')
       recommendation_tmp_filter = recommendation_tmp[recommendation_tmp['recommend']==1]
       if len(recommendation_tmp_filter)>0:
@@ -167,6 +182,8 @@ def add_yesterday_to_main_table(job_alert_path:Path,
 
       # append result-2 into primary_table
       all_dt_tmp = pd.read_csv(all_today_new_open_jobs)
+      all_dt_tmp = check_cols_and_save(all_dt_tmp, all_today_new_open_jobs, need_cols)
+      save_metric_data(all_dt_tmp, metric_data_path)
       all_dt_tmp['recommend'] = all_dt_tmp['recommend'].astype('Int64')
       all_dt_tmp_filter = all_dt_tmp[all_dt_tmp['recommend']==1]
       if len(all_dt_tmp_filter)>0:
@@ -176,6 +193,7 @@ def add_yesterday_to_main_table(job_alert_path:Path,
 
       # this table used to store recent two weeks reviewed but not suitable list
       recent_week_review = pd.read_csv(recent_week_review_path)
+      recent_week_review = check_cols_and_save(recent_week_review, recent_week_review_path, need_cols)
       recent_week_review['scrape_date'] = pd.to_datetime(recent_week_review['scrape_date'].apply(lambda x: datetime.strptime(str(x), '%Y%m%d'))) # 2026-01-01 00:00:00
       recent_date = pd.Timestamp.today().normalize()-pd.Timedelta(days=14)
       recent_week_review = recent_week_review[recent_week_review['scrape_date']>=recent_date]
@@ -191,8 +209,8 @@ def add_yesterday_to_main_table(job_alert_path:Path,
       yesterday_review_tmp = yesterday_review_tmp[~yesterday_review_tmp['job_id'].isin(recent_week_review['job_id'].unique().tolist())]
       if len(yesterday_review_tmp)>0:
             recent_week_review = pd.concat([recent_week_review,yesterday_review_tmp],axis=0)
-            recent_week_review.to_csv(recent_week_review_path, index=False, encoding='utf-8-sig')      
-
+            recent_week_review.to_csv(recent_week_review_path, index=False, encoding='utf-8-sig')
+            
 
 def get_last_apply_info(main_table_path: Path, 
                         new_df:pd.DataFrame)->pd.DataFrame:
@@ -265,7 +283,8 @@ def main(main_table_path:Path, added_data_path_list: list,
          delete_words_in_company:str,
          similar_company_save_path: Path,
          job_alert_path:Path, all_today_new_open_jobs:Path,
-         recent_week_review_path:Path):
+         recent_week_review_path:Path,
+         metric_data_path:Path):
       """Run the daily job recommendation pipeline.
 
       The pipeline performs the following steps:
@@ -309,7 +328,7 @@ def main(main_table_path:Path, added_data_path_list: list,
       # get table 1 and 2 as yesterday total review data, if today appear again, then delete from increasal data directly
       add_yesterday_to_main_table(job_alert_path, recommendation_path, 
                                   all_today_new_open_jobs, main_table_path,
-                                  recent_week_review_path)
+                                  recent_week_review_path, metric_data_path)
       
       recent_week_review_data = pd.read_csv(recent_week_review_path)
 
@@ -330,17 +349,13 @@ def main(main_table_path:Path, added_data_path_list: list,
       new_df['recommend'] = 1
       new_df['apply_date'] = pd.Timestamp.now().strftime('%Y%m%d')
 
-      need_cols = ['job_id', 'title', 'origin_company', 'company', 'location', 'salary', 'posted_date', 
-                   'job_url', 'scrape_date', 'last_apply_date','last_apply_title',
-                   'last_apply_to_today_days', 'recommend', 'apply_date']
-
       logger.info("🔴(1) Your personalised job alerts recommendation")
       similar_company = pd.read_csv(similar_company_save_path)
       job_alert_company = [str(x).lower() for x in similar_company['company'].unique().tolist()] # str->list
       job_alert_df = new_df[new_df['company'].str.contains('|'.join(job_alert_company))]
       if len(job_alert_df)>0:
             job_alert_df = build_order_group(job_alert_df)
-            job_alert_df[need_cols].to_csv(job_alert_path, index=False, encoding='utf-8-sig')
+            job_alert_df = check_cols_and_save(job_alert_df,job_alert_path,need_cols)
             logger.info("✅ The first recommendation list has %d jobs!", len(job_alert_df))
 
       logger.info("🔴(2) Recently posted jobs never applied or applied before two weeks")
@@ -352,8 +367,7 @@ def main(main_table_path:Path, added_data_path_list: list,
       recommendation = pd.concat([group1, group2], axis=0).drop_duplicates().reset_index(drop=True)
       recommendation = recommendation[~recommendation['job_id'].isin(job_alert_df['job_id'].unique().tolist())]
       recommendation = build_order_group(recommendation)
-
-      recommendation[need_cols].to_csv(recommendation_path, index=False, encoding = 'utf-8-sig')
+      recommendation = check_cols_and_save(recommendation,recommendation_path,need_cols)
       logger.info("✅ The second recommendation list has %d jobs!", len(recommendation))
       
       logger.info("🔴(3) Posted within 24 hours and excluding the jobs recommended above")
@@ -367,7 +381,7 @@ def main(main_table_path:Path, added_data_path_list: list,
       all_today_df = build_order_group(all_today_df)
       all_today_df['recommend'] = ''
       all_today_df['apply_date'] = ''
-      all_today_df[need_cols].to_csv(all_today_new_open_jobs, index=False, encoding='utf-8-sig')
+      all_today_df = check_cols_and_save(all_today_df,all_today_new_open_jobs,need_cols)
       logger.info("✅ The third recommendation list has %d jobs!", len(all_today_df))
 
 
@@ -391,7 +405,6 @@ if __name__ == "__main__":
     delete_words_in_company = cfg["delete_words_in_company"]
 
     def resolve_path(base: Path, p) -> Path:
-        """Resolve ``p`` against ``base`` if it is not already absolute."""
         p = Path(p)
         return p if p.is_absolute() else (base / p).resolve()
 
@@ -411,6 +424,9 @@ if __name__ == "__main__":
     # Load the list of priority companies for the job alert list
     similar_company_save_path = resolve_path(config_dir, Path(cfg['similar_company_save_path']))
 
+    # online metric monitoring
+    metric_data_path = resolve_path(config_dir, Path(cfg["metric_data_path"]))
+
     # Run the pipeline
     main(
         main_table_path=main_table_path,
@@ -422,7 +438,8 @@ if __name__ == "__main__":
         similar_company_save_path=similar_company_save_path,
         job_alert_path=job_alert_path,
         all_today_new_open_jobs=all_today_new_open_jobs,
-        recent_week_review_path=recent_week_review_path
+        recent_week_review_path=recent_week_review_path,
+        metric_data_path=metric_data_path
     )
       
 

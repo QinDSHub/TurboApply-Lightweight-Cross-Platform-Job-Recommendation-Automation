@@ -9,6 +9,9 @@ indeed_end_page=1
 irishjobs_start_page=1
 irishjobs_end_page=1
 
+# run monthly report/online metric at the start of the month
+run_monthly_report="True"
+
 # when you have new interview company, you could update it as "True"
 open_similar_company_recommend="False"
 
@@ -43,6 +46,13 @@ if (
 
     echo -e "${GREEN}[3/3] Generate recommendation...${NC}"
     poetry run python recommend.py --config $config || exit 1
+
+    if [ "$run_monthly_report" = "True" ]; then
+        echo -e "${GREEN} Run monthly report...${NC}"
+        poetry run python monitor.py --config $config || exit 1
+    else:
+        echo "Run monthly online metric report at the start of the month, not now!"
+    fi
 ); then
     echo -e "${GREEN}✅ All tasks finished successfully! ${NC}"
 else
